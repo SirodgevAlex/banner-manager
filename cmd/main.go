@@ -2,18 +2,18 @@ package main
 
 import (
     "banner-manager/internal/handlers"
-	"banner-manager/db/postgres"
+	"banner-manager/db"
 	"log"
 	"net/http"
     "github.com/gorilla/mux"
 )
 
 func main() {
-	err := postgres.ConnectDB()
+	err := db.ConnectPostgresDB()
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
 	}
-	defer postgres.CloseDB()
+	defer db.ClosePostgresDB()
 
 	router := mux.NewRouter()
 

@@ -1,15 +1,17 @@
-package postgres
+package db
 
 import (
-    "database/sql"
-    "log"
-    _ "github.com/lib/pq"
+	"database/sql"
+	"fmt"
+	"log"
+
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
-func ConnectDB() error {
-    connStr := "user=postgres dbname=banner-manager-db password=1234 sslmode=disable"
+func ConnectPostgresDB() error {
+    connStr := "user=postgres dbname=banner_manager_tables password=1234 sslmode=disable"
     var err error
     db, err = sql.Open("postgres", connStr)
     if err != nil {
@@ -23,9 +25,18 @@ func ConnectDB() error {
     return nil
 }
 
-func CloseDB() {
+func ClosePostgresDB() {
     if db != nil {
         db.Close()
         log.Println("Disconnected from PostgreSQL database")
     }
+}
+
+func GetPostgresDB() (*sql.DB, error) {
+	fmt.Print("ya[x]")
+	err := db.Ping()
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }

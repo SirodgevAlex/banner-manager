@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"banner-manager/internal/models"
-	"banner-manager/db/postgres"
+	"banner-manager/db"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,6 +14,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var jwtKey = []byte("secret_key")
 
 func GetUserBannerHandler(w http.ResponseWriter, r *http.Request) {
 	tagID := r.URL.Query().Get("tag_id")
@@ -87,8 +89,14 @@ func isPasswordSafe(password string) bool {
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
+	db, err := db.GetPostgresDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	var user models.User
-	err := json.NewDecoder(r.Body).Decode(&user)
+	err = json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -126,6 +134,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func authorize(w http.ResponseWriter, r *http.Request) {
+	db, err := db.GetPostgresDB()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	var user models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -133,7 +147,7 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var hashedPassword string
-	err := db.QueryRow("SELECT Password FROM Users WHERE Email = $1", user.Email).Scan(&hashedPassword)
+	err = db.QueryRow("SELECT Password FROM Users WHERE Email = $1", user.Email).Scan(&hashedPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -144,18 +158,18 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user_id int
-	err = db.QueryRow("SELECT Id FROM users WHERE Email = $1", user.Email).Scan(&user_id)
+	var UserId int
+	err = db.QueryRow("SELECT Id FROM users WHERE Email = $1", user.Email).Scan(&UserId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
 	expirationTime := time.Now().Add(5 * time.Minute)
-	claims := &Claims{
-		user_id: user_id,
+	claims := &models.Claims{ //todo не такое скорее всего
+		UserId: UserId,
 		StandardClaims: jwt.StandardClaims{
-			Subject:   strconv.Itoa(user_id),
+			Subject:   strconv.Itoa(UserId),
 			ExpiresAt: expirationTime.Unix(),
 		},
 	}
