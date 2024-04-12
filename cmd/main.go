@@ -1,23 +1,24 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "banner-manager/api"
-    "banner-manager/db/postgres"
+    "banner-manager/internal/handlers"
+	"banner-manager/db/postgres"
+	"log"
+	"net/http"
+    "github.com/gorilla/mux"
 )
 
 func main() {
-    err := postgres.ConnectDB()
-    if err != nil {
-        log.Fatalf("Error connecting to database: %v", err)
-    }
-    defer postgres.CloseDB()
+	err := postgres.ConnectDB()
+	if err != nil {
+		log.Fatalf("Error connecting to database: %v", err)
+	}
+	defer postgres.CloseDB()
 
-    router := api.NewRouter()
+	router := mux.NewRouter()
 
-    addr := ":8080"
-    if err := http.ListenAndServe(addr, router); err != nil {
-        log.Fatalf("Error starting server: %v", err)
-    }
+    router.HandleFunc("/register", handlers.Register).Methods("POST")
+	//router.HandleFunc("/user_banner", ).Methods("GET")
+
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
