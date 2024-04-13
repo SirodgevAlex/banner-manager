@@ -1,16 +1,19 @@
 package main
 
 import (
-    "banner-manager/internal/handlers"
 	"banner-manager/db"
+	"banner-manager/internal/handlers"
 	"log"
 	"net/http"
-    "github.com/gorilla/mux"
+	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
     db.InitRedis()
     defer db.CloseRedis()
+    db.PeriodicallyCleanExpiredRedisTokens(time.Second)
 
 	err := db.ConnectPostgresDB()
 	if err != nil {
@@ -23,6 +26,7 @@ func main() {
     router.HandleFunc("/register", handlers.Register).Methods("POST")
     router.HandleFunc("/authorize", handlers.Authorize).Methods("POST")
 	router.HandleFunc("/user_banner", handlers.GetUserBannerHandler).Methods("GET")
+    router.HandleFunc("/banner", handlers.CreateBannerHandler).Methods("POST")
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8085", router))
 }

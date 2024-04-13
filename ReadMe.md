@@ -8,7 +8,15 @@ curl -i -X POST http://localhost:8080/register \
 -d '{"Email": "sirodgev@yandex.ru", "Password": "Sneeeir1_", "IsAdmin": "false"}'
 ```
 
-5. Запрос для аутентификации
+5. 
+
+```bash
+curl -i -X POST http://localhost:8080/register \
+-H 'Content-Type: application/json' \
+-d '{"Email": "kortkova@yandex.ru", "Password": "REsdf12_", "IsAdmin": "true"}'
+```
+
+6. Запрос для аутентификации
 
 ```bash
 curl -i -X POST http://localhost:8080/authorize \

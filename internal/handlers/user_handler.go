@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"banner-manager/internal/models"
 	"banner-manager/db"
+	"banner-manager/internal/models"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -29,7 +29,13 @@ func GetUserBannerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userToken == "" || !isValidUserToken(userToken) {
+	tokenExists, err := db.IsRedisTokenExists(userToken)
+	if err != nil {
+		http.Error(w, "Ошибка проверки токена", http.StatusInternalServerError)
+		return
+	}
+
+	if userToken == "" || !tokenExists {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -120,8 +126,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		query := "INSERT INTO users(Email, Password, IsAdmin) VALUES($1, $2, $3) RETURNING Id"
-		err = db.QueryRow(query, user.Email, string(hashedPassword), user.IsAdmin).Scan(&user.Id)
+		query := "INSERT INTO users(Email, Password, IsAdmin) VALUES($1, $2, $3) RETURNING ID"
+		err = db.QueryRow(query, user.Email, string(hashedPassword), user.IsAdmin).Scan(&user.ID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -158,9 +164,8 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-	var UserId int
-	err = database.QueryRow("SELECT Id FROM users WHERE Email = $1", user.Email).Scan(&UserId)
+	var UserID int
+	err = database.QueryRow("SELECT ID FROM users WHERE Email = $1", user.Email).Scan(&UserID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -175,10 +180,10 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &models.Claims{
-		UserId: UserId,
+		UserID:  UserID,
 		IsAdmin: IsAdmin,
 		StandardClaims: jwt.StandardClaims{
-			Subject:   strconv.Itoa(UserId),
+			Subject:   strconv.Itoa(UserID),
 			ExpiresAt: expirationTime.Unix(),
 		},
 	}
@@ -189,8 +194,81 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.AddRedisToken(tokenString, 5 * time.Minute)
+	err = db.AddRedisToken(tokenString, 5*time.Minute)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+}
+
+func CreateBannerHandler(w http.ResponseWriter, r *http.Request) {
+	var banner models.Banner
+	err := json.NewDecoder(r.Body).Decode(&banner)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	adminToken := r.Header.Get("token")
+
+	isAdmin, err := IsAdminTokenValid(adminToken)
+	if err != nil {
+		http.Error(w, "Ошибка при проверке токена", http.StatusInternalServerError)
+		return
+	}
+	if !isAdmin {
+		http.Error(w, "Недостаточно прав", http.StatusUnauthorized)
+		return
+	}
+
+	bannerID, err := CreateBanner(banner)
+	if err != nil {
+		http.Error(w, "Ошибка при создании баннера", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]int{"banner_id": bannerID})
+}
+
+func CreateBanner(banner models.Banner) (int, error) {
+	database, err := db.GetPostgresDB()
+	if err != nil {
+		return 0, err
+	}
+
+	createdAt := time.Now()
+	updatedAt := createdAt
+
+	query := `
+		INSERT INTO banners (title, text, url, feature_id, tag_id, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id`
+
+	var id int
+	err = database.QueryRow(query, banner.Title, banner.Text, banner.URL, banner.FeatureID, banner.TagID, banner.IsActive, createdAt, updatedAt).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+
+	banner.ID = id
+	banner.CreatedAt = createdAt
+	banner.UpdatedAt = updatedAt
+
+	return id, nil
+}
+
+func IsAdminTokenValid(tokenString string) (bool, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &models.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	if claims, ok := token.Claims.(*models.Claims); ok && token.Valid {
+		return claims.IsAdmin, nil
+	}
+
+	return false, err
 }

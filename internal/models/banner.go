@@ -1,17 +1,29 @@
 package models
 
+import "time"
+
 type Banner struct {
-	ID      int         `json:"id"`
-	Content interface{} `json:"content"`
-	Feature int         `json:"feature"`
-	Tags    []int       `json:"tags"`
+	ID        int       `json:"id"`
+	FeatureID int       `json:"feature_id"`
+	TagID     int       `json:"tag_id"`
+	Title     string    `json:"title"`
+	Text      string    `json:"text"`
+	URL       string    `json:"url"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NewBanner(id int, content interface{}, feature int, tags []int) *Banner {
+func NewBanner(id int, title, text, url string, featureID, tagID int, isActive bool, createdAt, updatedAt time.Time) *Banner {
 	return &Banner{
-		ID:      id,
-		Content: content,
-		Feature: feature,
-		Tags:    tags,
+		ID:        id,
+		Title:     title,
+		Text:      text,
+		URL:       url,
+		FeatureID: featureID,
+		TagID:     tagID,
+		IsActive:  isActive,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
 	}
 }
