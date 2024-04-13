@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -33,7 +32,6 @@ func ClosePostgresDB() {
 }
 
 func GetPostgresDB() (*sql.DB, error) {
-	fmt.Print("ya[x]")
 	err := db.Ping()
 	if err != nil {
 		return nil, err

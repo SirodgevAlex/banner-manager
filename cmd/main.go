@@ -9,6 +9,9 @@ import (
 )
 
 func main() {
+    db.InitRedis()
+    defer db.CloseRedis()
+
 	err := db.ConnectPostgresDB()
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
@@ -18,7 +21,8 @@ func main() {
 	router := mux.NewRouter()
 
     router.HandleFunc("/register", handlers.Register).Methods("POST")
-	//router.HandleFunc("/user_banner", ).Methods("GET")
+    router.HandleFunc("/authorize", handlers.Authorize).Methods("POST")
+	router.HandleFunc("/user_banner", handlers.GetUserBannerHandler).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

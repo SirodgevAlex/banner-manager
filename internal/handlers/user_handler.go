@@ -120,8 +120,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		query := "INSERT INTO users(Email, Password) VALUES($1, $2) RETURNING Id"
-		err = db.QueryRow(query, user.Email, hashedPassword).Scan(&user.Id)
+		query := "INSERT INTO users(Email, Password, IsAdmin) VALUES($1, $2, $3) RETURNING Id"
+		err = db.QueryRow(query, user.Email, string(hashedPassword), user.IsAdmin).Scan(&user.Id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -133,8 +133,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-func authorize(w http.ResponseWriter, r *http.Request) {
-	db, err := db.GetPostgresDB()
+func Authorize(w http.ResponseWriter, r *http.Request) {
+	database, err := db.GetPostgresDB()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -147,7 +147,7 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var hashedPassword string
-	err = db.QueryRow("SELECT Password FROM Users WHERE Email = $1", user.Email).Scan(&hashedPassword)
+	err = database.QueryRow("SELECT Password FROM Users WHERE Email = $1", user.Email).Scan(&hashedPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -158,16 +158,25 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	var UserId int
-	err = db.QueryRow("SELECT Id FROM users WHERE Email = $1", user.Email).Scan(&UserId)
+	err = database.QueryRow("SELECT Id FROM users WHERE Email = $1", user.Email).Scan(&UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	var IsAdmin bool
+	err = database.QueryRow("SELECT IsAdmin FROM users WHERE Email = $1", user.Email).Scan(&IsAdmin)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
 	expirationTime := time.Now().Add(5 * time.Minute)
-	claims := &models.Claims{ //todo не такое скорее всего
+	claims := &models.Claims{
 		UserId: UserId,
+		IsAdmin: IsAdmin,
 		StandardClaims: jwt.StandardClaims{
 			Subject:   strconv.Itoa(UserId),
 			ExpiresAt: expirationTime.Unix(),
@@ -179,6 +188,8 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка генерации токена", http.StatusInternalServerError)
 		return
 	}
+
+	err = db.AddRedisToken(tokenString, 5 * time.Minute)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
