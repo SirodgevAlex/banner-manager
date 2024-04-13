@@ -24,12 +24,10 @@ func CloseRedis() {
 }
 
 func AddRedisToken(token string, expiration time.Duration) error {
-
     return rdb.Set(ctx, token, true, expiration).Err()
 }
 
 func IsRedisTokenExists(token string) (bool, error) {
-
     exists, err := rdb.Exists(ctx, token).Result()
     if err != nil {
         return false, err
@@ -42,7 +40,7 @@ func DeleteRedisToken(token string) error {
     return rdb.Del(ctx, token).Err()
 }
 
-func PeriodicallyCleanExpiredRedisTokens(interval time.Duration) {
+func PeriodicallyCleanExpiredRedisTokens(interval time.Duration, stop <-chan struct{}) {
     ticker := time.NewTicker(interval)
     defer ticker.Stop()
 
@@ -64,6 +62,8 @@ func PeriodicallyCleanExpiredRedisTokens(interval time.Duration) {
                     }
                 }
             }
+        case <-stop:
+            return
         }
     }
 }

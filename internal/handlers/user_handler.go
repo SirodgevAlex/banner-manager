@@ -95,7 +95,7 @@ func isPasswordSafe(password string) bool {
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
-	db, err := db.GetPostgresDB()
+	database, err := db.GetPostgresDB()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -107,9 +107,10 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	fmt.Println(user)
 
 	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE Email = $1", user.Email).Scan(&count)
+	err = database.QueryRow("SELECT COUNT(*) FROM users WHERE email = $1", user.Email).Scan(&count)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -126,13 +127,15 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		query := "INSERT INTO users(Email, Password, IsAdmin) VALUES($1, $2, $3) RETURNING ID"
-		err = db.QueryRow(query, user.Email, string(hashedPassword), user.IsAdmin).Scan(&user.ID)
+		query := "INSERT INTO users(email, password, is_admin) VALUES($1, $2, $3) RETURNING id"
+		err = database.QueryRow(query, user.Email, string(hashedPassword), user.IsAdmin).Scan(&user.ID)
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
+	fmt.Println(user)
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
@@ -153,7 +156,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var hashedPassword string
-	err = database.QueryRow("SELECT Password FROM Users WHERE Email = $1", user.Email).Scan(&hashedPassword)
+	err = database.QueryRow("SELECT password FROM users WHERE email = $1", user.Email).Scan(&hashedPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -165,14 +168,14 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var UserID int
-	err = database.QueryRow("SELECT ID FROM users WHERE Email = $1", user.Email).Scan(&UserID)
+	err = database.QueryRow("SELECT id FROM users WHERE email = $1", user.Email).Scan(&UserID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
 	var IsAdmin bool
-	err = database.QueryRow("SELECT IsAdmin FROM users WHERE Email = $1", user.Email).Scan(&IsAdmin)
+	err = database.QueryRow("SELECT is_admin FROM users WHERE email = $1", user.Email).Scan(&IsAdmin)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -195,6 +198,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = db.AddRedisToken(tokenString, 5*time.Minute)
+	fmt.Println(err)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
@@ -216,7 +220,7 @@ func CreateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !isAdmin {
-		http.Error(w, "Недостаточно прав", http.StatusUnauthorized)
+		http.Error(w, "Недостаточно прав", http.StatusForbidden)
 		return
 	}
 

@@ -1,11 +1,11 @@
 CREATE TABLE IF NOT EXISTS users (
-    ID SERIAL PRIMARY KEY,
-    Email VARCHAR(200) NOT NULL,
-    Password VARCHAR(200) NOT NULL,
-    IsAdmin BOOLEAN DEFAULT false
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(200) NOT NULL,
+    password VARCHAR(200) NOT NULL,
+    is_admin BOOLEAN DEFAULT false
 );
 
-CREATE TABLE banners (
+CREATE TABLE IF NOT EXISTS banners (
     id SERIAL PRIMARY KEY,
     feature_id INT,
     tag_id INT,
@@ -16,3 +16,10 @@ CREATE TABLE banners (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX idx_unique_feature_tag ON banners (feature_id, tag_id);
+
+select * from users;
+select * from banners;
+
+
