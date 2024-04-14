@@ -12,9 +12,9 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	_ "strings"
 	"time"
 	"unicode"
-	_ "strings"
 )
 
 var jwtKey = []byte("secret_key")
@@ -263,9 +263,10 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.AddRedisToken(tokenString, 5*time.Second)
-	if (err != nil) {
-		
+	err = db.AddRedisToken(tokenString, 5*time.Minute)
+	if err != nil {
+		http.Error(w, "Ошибка при добавлении токена в Redis", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -285,13 +286,13 @@ func CreateBannerHandler(w http.ResponseWriter, r *http.Request) {
 	isAdmin, err := IsAdminTokenValid(adminToken)
 
 	if err != nil {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
 	if !isAdmin {
 		http.Error(w, "Forbidden", http.StatusForbidden)
-	    return
+		return
 	}
 
 	bannerID, err := CreateBanner(banner)
@@ -353,13 +354,13 @@ func GetBannersByFeatureOrTagHandler(w http.ResponseWriter, r *http.Request) {
 	isAdmin, err := IsAdminTokenValid(adminToken)
 
 	if err != nil {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
 	if !isAdmin {
 		http.Error(w, "Forbidden", http.StatusForbidden)
-	    return
+		return
 	}
 
 	var req struct {
@@ -371,7 +372,7 @@ func GetBannersByFeatureOrTagHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(r.Body)
 
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON format: %v", err), http.StatusBadRequest)
 		return
@@ -453,20 +454,20 @@ func GetBannersByFeatureOrTag(featureID, tagID int) ([]models.Banner, error) {
 // 		return
 // 	}
 
-	// var requestBody struct {
-	// 	TagIDs    []int  `json:"tag_ids,omitempty"`
-	// 	FeatureID int    `json:"feature_id,omitempty"`
-	// 	Content   struct {
-	// 		Title string `json:"title,omitempty"`
-	// 		Text  string `json:"text,omitempty"`
-	// 		URL   string `json:"url,omitempty"`
-	// 	} `json:"content,omitempty"`
-	// 	IsActive *bool `json:"is_active,omitempty"`
-	// }
-	// if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-	// 	http.Error(w, "Invalid JSON format", http.StatusBadRequest)
-	// 	return
-	// }
+// var requestBody struct {
+// 	TagIDs    []int  `json:"tag_ids,omitempty"`
+// 	FeatureID int    `json:"feature_id,omitempty"`
+// 	Content   struct {
+// 		Title string `json:"title,omitempty"`
+// 		Text  string `json:"text,omitempty"`
+// 		URL   string `json:"url,omitempty"`
+// 	} `json:"content,omitempty"`
+// 	IsActive *bool `json:"is_active,omitempty"`
+// }
+// if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+// 	http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+// 	return
+// }
 
 // 	query := "UPDATE banners SET"
 // 	var queryParams []interface{}
@@ -531,163 +532,163 @@ func GetBannersByFeatureOrTag(featureID, tagID int) ([]models.Banner, error) {
 // }
 
 func DeleteBannerHandler(w http.ResponseWriter, r *http.Request) {
-    adminToken := r.Header.Get("token")
+	adminToken := r.Header.Get("token")
 	isAdmin, err := IsAdminTokenValid(adminToken)
 
 	if err != nil {
-	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	    return
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
 	if !isAdmin {
 		http.Error(w, "Forbidden", http.StatusForbidden)
-	    return
+		return
 	}
 
-    idStr := mux.Vars(r)["id"]
-    id, err := strconv.Atoi(idStr)
-    if err != nil {
-        http.Error(w, "Invalid banner ID", http.StatusBadRequest)
-        return
-    }
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid banner ID", http.StatusBadRequest)
+		return
+	}
 
-    //featureID, tagID, err := GetFeatureIDAndTagIDByBannerID(id)
-    if err != nil {
-        http.Error(w, "Failed to get feature ID and tag ID", http.StatusInternalServerError)
-        return
-    }
+	//featureID, tagID, err := GetFeatureIDAndTagIDByBannerID(id)
+	if err != nil {
+		http.Error(w, "Failed to get feature ID and tag ID", http.StatusInternalServerError)
+		return
+	}
 
-    if err := DeleteBannerFromDB(id); err != nil {
-        http.Error(w, "Failed to delete banner from database", http.StatusInternalServerError)
-        return
-    }
+	if err := DeleteBannerFromDB(id); err != nil {
+		http.Error(w, "Failed to delete banner from database", http.StatusInternalServerError)
+		return
+	}
 
 	// featureIDStr := strconv.Itoa(featureID)
 	// tagIDStr := strconv.Itoa(tagID)
-    // if err := db.DeleteBannerFromRedis(featureIDStr, tagIDStr); err != nil {
-    //     fmt.Println("Failed to delete banner from Redis:", err)
-    // }
+	// if err := db.DeleteBannerFromRedis(featureIDStr, tagIDStr); err != nil {
+	//     fmt.Println("Failed to delete banner from Redis:", err)
+	// }
 
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("Banner deleted successfully"))
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Banner deleted successfully"))
 }
 
 func GetFeatureIDAndTagIDByBannerID(bannerID int) (int, int, error) {
-    database, err := db.GetPostgresDB()
-    if err != nil {
-        return 0, 0, err
-    }
+	database, err := db.GetPostgresDB()
+	if err != nil {
+		return 0, 0, err
+	}
 
-    var featureID, tagID int
-    query := "SELECT feature_id, tag_id FROM banners WHERE id = $1"
-    err = database.QueryRow(query, bannerID).Scan(&featureID, &tagID)
-    if err != nil {
-        return 0, 0, err
-    }
+	var featureID, tagID int
+	query := "SELECT feature_id, tag_id FROM banners WHERE id = $1"
+	err = database.QueryRow(query, bannerID).Scan(&featureID, &tagID)
+	if err != nil {
+		return 0, 0, err
+	}
 
-    return featureID, tagID, nil
+	return featureID, tagID, nil
 }
 
 func DeleteBannerFromDB(id int) error {
-    database, err := db.GetPostgresDB()
-    if err != nil {
-        return err
-    }
+	database, err := db.GetPostgresDB()
+	if err != nil {
+		return err
+	}
 
-    query := "DELETE FROM banners WHERE id = $1"
-    _, err = database.Exec(query, id)
-    if err != nil {
-        return err
-    }
+	query := "DELETE FROM banners WHERE id = $1"
+	_, err = database.Exec(query, id)
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
-    type UpdateBannerRequest struct {
-        TagIDs    []int  `json:"tag_ids,omitempty"`
-        FeatureID int    `json:"feature_id,omitempty"`
-        Content   struct {
-            Title string `json:"title,omitempty"`
-            Text  string `json:"text,omitempty"`
-            URL   string `json:"url,omitempty"`
-        } `json:"content,omitempty"`
-        IsActive bool `json:"is_active,omitempty"`
-    }
+	type UpdateBannerRequest struct {
+		TagIDs    []int `json:"tag_ids,omitempty"`
+		FeatureID int   `json:"feature_id,omitempty"`
+		Content   struct {
+			Title string `json:"title,omitempty"`
+			Text  string `json:"text,omitempty"`
+			URL   string `json:"url,omitempty"`
+		} `json:"content,omitempty"`
+		IsActive bool `json:"is_active,omitempty"`
+	}
 
-    adminToken := r.Header.Get("token")
-    isAdmin, err := IsAdminTokenValid(adminToken)
-    if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	adminToken := r.Header.Get("token")
+	isAdmin, err := IsAdminTokenValid(adminToken)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    if !isAdmin {
-        http.Error(w, "Forbidden", http.StatusForbidden)
-        return
-    }
+	if !isAdmin {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 
-    idStr := mux.Vars(r)["id"]
-    id, err := strconv.Atoi(idStr)
-    if err != nil {
-        http.Error(w, "Invalid banner ID", http.StatusBadRequest)
-        return
-    }
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid banner ID", http.StatusBadRequest)
+		return
+	}
 
-    var req UpdateBannerRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "Invalid JSON format", http.StatusBadRequest)
-        return
-    }
+	var req UpdateBannerRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
 
-    existingBanner, err := GetBannerByID(id)
-    if err != nil {
-        http.Error(w, "Failed to get banner", http.StatusInternalServerError)
-        return
-    }
+	existingBanner, err := GetBannerByID(id)
+	if err != nil {
+		http.Error(w, "Failed to get banner", http.StatusInternalServerError)
+		return
+	}
 
-    if err := DeleteBannerFromDB(id); err != nil {
-        http.Error(w, "Failed to delete banner from database", http.StatusInternalServerError)
-        return
-    }
+	if err := DeleteBannerFromDB(id); err != nil {
+		http.Error(w, "Failed to delete banner from database", http.StatusInternalServerError)
+		return
+	}
 
-    if req.Content.Title != "" {
-        existingBanner.Title = req.Content.Title
-    }
-    if req.Content.Text != "" {
-        existingBanner.Text = req.Content.Text
-    }
-    if req.Content.URL != "" {
-        existingBanner.URL = req.Content.URL
-    }
-    existingBanner.IsActive = req.IsActive
-    existingBanner.UpdatedAt = time.Now()
+	if req.Content.Title != "" {
+		existingBanner.Title = req.Content.Title
+	}
+	if req.Content.Text != "" {
+		existingBanner.Text = req.Content.Text
+	}
+	if req.Content.URL != "" {
+		existingBanner.URL = req.Content.URL
+	}
+	existingBanner.IsActive = req.IsActive
+	existingBanner.UpdatedAt = time.Now()
 
 	_, err = CreateBanner(*existingBanner)
-    if err != nil {
-        http.Error(w, "Failed to create banner in database", http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		http.Error(w, "Failed to create banner in database", http.StatusInternalServerError)
+		return
+	}
 
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("Banner updated successfully"))
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Banner updated successfully"))
 }
 
 func GetBannerByID(id int) (*models.Banner, error) {
-    database, err := db.GetPostgresDB()
-    if err != nil {
-        return nil, err
-    }
-    defer database.Close()
+	database, err := db.GetPostgresDB()
+	if err != nil {
+		return nil, err
+	}
+	defer database.Close()
 
-    query := "SELECT * FROM banners WHERE id = $1"
+	query := "SELECT * FROM banners WHERE id = $1"
 
-    var banner models.Banner
-    row := database.QueryRow(query, id)
-    err = row.Scan(&banner.ID, &banner.FeatureID, &banner.TagID, &banner.Title, &banner.Text, &banner.URL, &banner.IsActive, &banner.CreatedAt, &banner.UpdatedAt)
-    if err != nil {
-        return nil, err
-    }
+	var banner models.Banner
+	row := database.QueryRow(query, id)
+	err = row.Scan(&banner.ID, &banner.FeatureID, &banner.TagID, &banner.Title, &banner.Text, &banner.URL, &banner.IsActive, &banner.CreatedAt, &banner.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
 
-    return &banner, nil
+	return &banner, nil
 }
