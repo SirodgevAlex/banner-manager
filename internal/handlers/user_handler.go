@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"banner-manager/db"
+	"database/sql"
 	"banner-manager/internal/models"
 	"encoding/json"
 	"fmt"
@@ -341,3 +342,104 @@ func IsAdminTokenValid(tokenString string) (bool, error) {
 
 	return false, err
 }
+
+func GetBannersByFeatureOrTagHandler(w http.ResponseWriter, r *http.Request) {
+    // adminToken := r.Header.Get("token")
+	// isAdmin, err := IsAdminTokenValid(adminToken)
+
+    // if err != nil {
+    //     http.Error(w, "Unauthorized", http.StatusUnauthorized)
+    //     return
+    // }
+
+	// if !isAdmin {
+	// 	http.Error(w, "Forbidden", http.StatusForbidden)
+    //     return
+	// }
+
+    var req struct {
+        FeatureID int `json:"feature_id,omitempty"`
+        TagID     int `json:"tag_id,omitempty"`
+        Limit     int `json:"limit,omitempty"`
+        Offset    int `json:"offset,omitempty"`
+    }
+
+	fmt.Println(r.Body)
+
+    err := json.NewDecoder(r.Body).Decode(&req)
+    if err != nil {
+        http.Error(w, fmt.Sprintf("Invalid JSON format: %v", err), http.StatusBadRequest)
+        return
+    }
+
+    if req.FeatureID == 0 && req.TagID == 0 {
+        http.Error(w, "Feature ID or Tag ID must be provided", http.StatusBadRequest)
+        return
+    }
+
+    banners, err := GetBannersByFeatureOrTag(req.FeatureID, req.TagID)
+    if err != nil {
+        http.Error(w, "Failed to get banners", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(banners)
+}
+
+
+
+func GetBannersByFeatureOrTag(featureID, tagID int) ([]models.Banner, error) {
+    database, err := db.GetPostgresDB()
+	if err != nil {
+        return nil, err
+    }
+	
+    var banners []models.Banner
+
+    query := "SELECT * FROM banners WHERE true"
+	if featureID != 0 {
+		query += " AND feature_id = $1"
+	}
+	if tagID != 0 {
+		query += " AND tag_id = $2"
+	}
+		
+	fmt.Println(query)
+
+	var rows *sql.Rows
+
+    if tagID != 0 && featureID != 0 {
+		rows, err = database.Query(query, featureID, tagID)
+	} else if featureID != 0 {
+		rows, err = database.Query(query, featureID)
+	} else if tagID != 0 {
+		rows, err = database.Query(query, tagID)
+	} else {
+		rows, err = database.Query(query)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+    for rows.Next() {
+        var banner models.Banner
+		fmt.Println("ya")
+        if err := rows.Scan(&banner.ID, &banner.FeatureID, &banner.TagID, &banner.Title, &banner.Text, &banner.URL, &banner.IsActive, &banner.CreatedAt, &banner.UpdatedAt); err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+        banners = append(banners, banner)
+		fmt.Println("ya")
+    }
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+	fmt.Println("XUY")
+
+    return banners, nil
+}
+
+
