@@ -12,13 +12,13 @@ import (
 )
 
 func main() {
-    db.InitRedis()
-    defer db.CloseRedis()
+	db.InitRedisUser()
+	defer db.CloseRedisUser()
 
-    // stopCleanup := make(chan struct{}) 
-    // defer close(stopCleanup)
+	// stopCleanup := make(chan struct{})
+	// defer close(stopCleanup)
 
-    // go db.PeriodicallyCleanExpiredRedisTokens(time.Second, stopCleanup) пока забъем
+	// go db.PeriodicallyCleanExpiredRedisTokens(time.Second, stopCleanup) пока забъем
 
 	err := db.ConnectPostgresDB()
 	if err != nil {
@@ -30,10 +30,10 @@ func main() {
 
 	fmt.Println(handlers.IsAdminTokenValid("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzEzMDM3Mjc5LCJzdWIiOiIzIn0.z-EruTrVpKvPI0qcshydkbhEDKRyNk-UswkCx2pT8MY"))
 
-    router.HandleFunc("/register", handlers.Register).Methods("POST")
-    router.HandleFunc("/authorize", handlers.Authorize).Methods("POST")
+	router.HandleFunc("/register", handlers.Register).Methods("POST")
+	router.HandleFunc("/authorize", handlers.Authorize).Methods("POST")
 	router.HandleFunc("/user_banner", handlers.GetUserBannerHandler).Methods("GET") //протестировать 2 и понять, что там с uselastrevision
-    router.HandleFunc("/banner", handlers.CreateBannerHandler).Methods("POST") // протестировать 1
+	router.HandleFunc("/banner", handlers.CreateBannerHandler).Methods("POST")      // протестировать 1
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

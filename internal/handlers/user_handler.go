@@ -20,7 +20,11 @@ var jwtKey = []byte("secret_key")
 func GetUserBannerHandler(w http.ResponseWriter, r *http.Request) {
 	tagID := r.URL.Query().Get("tag_id")
 	featureID := r.URL.Query().Get("feature_id")
-	useLastRevision := r.URL.Query().Get("use_last_revision")
+	useLastRevision, err := strconv.ParseBool(r.URL.Query().Get("use_last_revision"))
+	if err != nil {
+		http.Error(w, "Invalid value for use_last_revision", http.StatusBadRequest)
+		return
+	}
 
 	userToken := r.Header.Get("token")
 
@@ -51,16 +55,61 @@ func GetUserBannerHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(banner)
 }
 
-func isValidUserToken(token string) bool {
-	return token == "user_token"
+func getBannerForUser(tagID, featureID string, useLastRevision bool) (*models.Banner, error) {
+	var banner *models.Banner
+	var err error
+
+	if useLastRevision {
+		banner, err = getLastBannerRevisionFromDB(tagID, featureID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		banner, err = db.GetBannerFromRedis(tagID, featureID)
+		if err != nil {
+			banner, err = getLastBannerRevisionFromDB(tagID, featureID)
+			if err != nil {
+				return nil, err
+			}
+			err := db.CacheBannerInRedis(tagID, featureID, banner)
+			if err != nil {
+				fmt.Println("Ошибка при сохранении баннера в кэше Redis:", err)
+			}
+		}
+	}
+
+	return banner, nil
 }
 
-func getBannerForUser(tagID, featureID, useLastRevision string) (map[string]interface{}, error) {
-	return map[string]interface{}{
-		"title": "Example Banner",
-		"text":  "This is an example banner.",
-		"url":   "https://example.com/banner",
-	}, nil
+func getLastBannerRevisionFromDB(tagID, featureID string) (*models.Banner, error) {
+	database, err := db.GetPostgresDB()
+	if err != nil {
+		return nil, err
+	}
+
+	var title, text, url string
+	err = database.QueryRow("SELECT title, text, url FROM banners WHERE tag_id = $1 AND feature_id = $2 ORDER BY updated_at DESC LIMIT 1", tagID, featureID).Scan(&title, &text, &url)
+	if err != nil {
+		return nil, err
+	}
+
+	banner := &models.Banner{
+		Title: title,
+		Text:  text,
+		URL:   url,
+	}
+
+	return banner, nil
+}
+
+func isUserTokenValid(token string) (bool, error) { // todo
+	isUser, err := IsAdminTokenValid(token)
+	if err != nil {
+		return isUser, err
+	}
+
+	isUser = !isUser
+	return isUser, nil
 }
 
 func isEmailValid(email string) bool {
