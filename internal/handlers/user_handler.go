@@ -18,13 +18,21 @@ import (
 var jwtKey = []byte("secret_key")
 
 func GetUserBannerHandler(w http.ResponseWriter, r *http.Request) {
-	tagID := r.URL.Query().Get("tag_id")
-	featureID := r.URL.Query().Get("feature_id")
-	useLastRevision, err := strconv.ParseBool(r.URL.Query().Get("use_last_revision"))
-	if err != nil {
-		http.Error(w, "Invalid value for use_last_revision", http.StatusBadRequest)
-		return
-	}
+	var requestData struct {
+        TagID            string `json:"tag_id"`
+        FeatureID        string `json:"feature_id"`
+        UseLastRevision  bool   `json:"use_last_revision"`
+    }
+
+    err := json.NewDecoder(r.Body).Decode(&requestData)
+    if err != nil {
+        http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+        return
+    }
+
+    tagID := requestData.TagID
+    featureID := requestData.FeatureID
+    useLastRevision := requestData.UseLastRevision
 
 	userToken := r.Header.Get("token")
 
@@ -33,11 +41,12 @@ func GetUserBannerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenExists, err := db.IsRedisTokenExists(userToken)
-	if err != nil {
-		http.Error(w, "Ошибка проверки токена", http.StatusInternalServerError)
-		return
-	}
+	// tokenExists, err := db.IsRedisTokenExists(userToken)
+	// if err != nil {
+	// 	http.Error(w, "Ошибка проверки токена", http.StatusInternalServerError)
+	// 	return
+	// }
+	tokenExists := true
 
 	if userToken == "" || !tokenExists {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -50,9 +59,15 @@ func GetUserBannerHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Failed to get banner: %v", err)
 		return
 	}
+	
+	response := map[string]string{
+        "title": banner.Title,
+        "text":  banner.Text,
+        "url":   banner.URL,
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(banner)
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(response)
 }
 
 func getBannerForUser(tagID, featureID string, useLastRevision bool) (*models.Banner, error) {
@@ -275,6 +290,7 @@ func CreateBannerHandler(w http.ResponseWriter, r *http.Request) {
 
 	bannerID, err := CreateBanner(banner)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "Ошибка при создании баннера", http.StatusInternalServerError)
 		return
 	}

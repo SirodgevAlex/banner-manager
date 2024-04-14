@@ -33,7 +33,7 @@ func main() {
 	router.HandleFunc("/register", handlers.Register).Methods("POST")
 	router.HandleFunc("/authorize", handlers.Authorize).Methods("POST")
 	router.HandleFunc("/user_banner", handlers.GetUserBannerHandler).Methods("GET") //протестировать 2 и понять, что там с uselastrevision
-	router.HandleFunc("/banner", handlers.CreateBannerHandler).Methods("POST")      // протестировать 1
+	router.HandleFunc("/banner", handlers.CreateBannerHandler).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

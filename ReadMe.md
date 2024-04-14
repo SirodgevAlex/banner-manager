@@ -33,7 +33,7 @@ curl -i -X POST http://localhost:8080/authorize \
 ```bash
 curl -i -X POST http://localhost:8080/banner \
 -H 'Content-Type: application/json' \
--H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzEzMDQ3NjY1LCJzdWIiOiIzIn0.YcrQhFfxRp7uNnJKmNxkGrcYU5kQ8vRS_yOe5-uv42s' \
+-H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzEzMDY2Nzg4LCJzdWIiOiIzIn0.lZbJY1Wez1A0oANxH2Fm5AEx_HHP__Xw1pjnHgfvUGY' \
 -d '{
     "title": "Новый баннер",
     "text": "Это новый баннер",
@@ -43,3 +43,17 @@ curl -i -X POST http://localhost:8080/banner \
     "is_active": true
 }'
 ```
+
+8. Запрос для получения баннера для пользователя
+
+```bash
+curl -i -X GET http://localhost:8080/user_banner \
+-H 'Content-Type: application/json' \
+-H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJpc19hZG1pbiI6ZmFsc2UsImV4cCI6MTcxMzA1ODc4OCwic3ViIjoiMSJ9.ImQeNyL7tCl28FyT0bKdE-0xIqA-n355vO1ReObpRU0' \
+--data '{
+  "tag_id": "456",
+  "feature_id": "123",
+  "use_last_revision": true
+}'
+```
+
