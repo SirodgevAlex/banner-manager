@@ -5,6 +5,7 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
+    "banner-manager/internal/models"
 )
 
 var db *sql.DB
@@ -37,4 +38,20 @@ func GetPostgresDB() (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func GetLastBannerRevisionFromDB(tagID, featureID string) (*models.Banner, error) {
+    var title, text, url string
+	err := db.QueryRow("SELECT title, text, url FROM banners WHERE tag_id = $1 AND feature_id = $2 ORDER BY updated_at DESC LIMIT 1", tagID, featureID).Scan(&title, &text, &url)
+	if err != nil {
+		return nil, err
+	}
+
+	banner := &models.Banner{
+		Title: title,
+		Text:  text,
+		URL:   url,
+	}
+
+	return banner, nil
 }

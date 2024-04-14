@@ -43,12 +43,11 @@ func GetUserBannerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// tokenExists, err := db.IsRedisTokenExists(userToken)
-	// if err != nil {
-	// 	http.Error(w, "Ошибка проверки токена", http.StatusInternalServerError)
-	// 	return
-	// }
-	tokenExists := true
+	tokenExists, err := db.IsRedisTokenExists(userToken)
+	if err != nil {
+		http.Error(w, "Ошибка проверки токена", http.StatusInternalServerError)
+		return
+	}
 
 	if userToken == "" || !tokenExists {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -77,43 +76,27 @@ func getBannerForUser(tagID, featureID string, useLastRevision bool) (*models.Ba
 	var err error
 
 	if useLastRevision {
-		banner, err = getLastBannerRevisionFromDB(tagID, featureID)
+		banner, err = db.GetLastBannerRevisionFromDB(tagID, featureID)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		banner, err = db.GetBannerFromRedis(tagID, featureID)
 		if err != nil {
-			banner, err = getLastBannerRevisionFromDB(tagID, featureID)
+			banner, err = db.GetLastBannerRevisionFromDB(tagID, featureID)
 			if err != nil {
 				return nil, err
 			}
+
+			if banner == nil {
+				return nil, fmt.Errorf("баннер не найден: %s", http.StatusText(http.StatusNotFound))
+			}
+			
 			err := db.CacheBannerInRedis(tagID, featureID, banner)
 			if err != nil {
 				fmt.Println("Ошибка при сохранении баннера в кэше Redis:", err)
 			}
 		}
-	}
-
-	return banner, nil
-}
-
-func getLastBannerRevisionFromDB(tagID, featureID string) (*models.Banner, error) {
-	database, err := db.GetPostgresDB()
-	if err != nil {
-		return nil, err
-	}
-
-	var title, text, url string
-	err = database.QueryRow("SELECT title, text, url FROM banners WHERE tag_id = $1 AND feature_id = $2 ORDER BY updated_at DESC LIMIT 1", tagID, featureID).Scan(&title, &text, &url)
-	if err != nil {
-		return nil, err
-	}
-
-	banner := &models.Banner{
-		Title: title,
-		Text:  text,
-		URL:   url,
 	}
 
 	return banner, nil
