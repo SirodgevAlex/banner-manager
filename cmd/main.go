@@ -35,6 +35,8 @@ func main() {
 	router.HandleFunc("/user_banner", handlers.GetUserBannerHandler).Methods("GET") //протестировать 2 и понять, что там с uselastrevision
 	router.HandleFunc("/banner", handlers.GetBannersByFeatureOrTagHandler).Methods("GET")
 	router.HandleFunc("/banner", handlers.CreateBannerHandler).Methods("POST")
+	router.HandleFunc("/banner/{id}", handlers.UpdateBannerHandler).Methods("PATCH")
+	router.HandleFunc("/banner/{id}", handlers.DeleteBannerHandler).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

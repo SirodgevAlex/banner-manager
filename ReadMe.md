@@ -67,3 +67,10 @@ curl -i -X GET http://localhost:8080/banner \
     "feature_id": 123
 }'
 ```
+
+10. Запрос для удаления
+
+```bash
+curl -i -X DELETE http://localhost:8080/banner/6 \
+-H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzEzMDg5MjAwLCJzdWIiOiIzIn0.EJHSImpvV9bc7JPFZYPN-HeTPmOoIpr50JpaMAK6dC0'
+```
