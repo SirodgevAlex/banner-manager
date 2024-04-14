@@ -263,8 +263,10 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.AddRedisToken(tokenString, 5*time.Minute)
-	fmt.Println(err)
+	err = db.AddRedisToken(tokenString, 5*time.Second)
+	if (err != nil) {
+		
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
@@ -278,17 +280,19 @@ func CreateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// adminToken := r.Header.Get("token")
+	adminToken := r.Header.Get("token")
 
-	// isAdmin, err := IsAdminTokenValid(adminToken)
-	// if err != nil {
-	// 	http.Error(w, "Ошибка при проверке токена", http.StatusInternalServerError)
-	// 	return
-	// }
-	// if !isAdmin {
-	// 	http.Error(w, "Недостаточно прав", http.StatusForbidden)
-	// 	return
-	// }
+	isAdmin, err := IsAdminTokenValid(adminToken)
+
+	if err != nil {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
+
+	if !isAdmin {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	    return
+	}
 
 	bannerID, err := CreateBanner(banner)
 	if err != nil {
@@ -345,18 +349,18 @@ func IsAdminTokenValid(tokenString string) (bool, error) {
 }
 
 func GetBannersByFeatureOrTagHandler(w http.ResponseWriter, r *http.Request) {
-	// adminToken := r.Header.Get("token")
-	// isAdmin, err := IsAdminTokenValid(adminToken)
+	adminToken := r.Header.Get("token")
+	isAdmin, err := IsAdminTokenValid(adminToken)
 
-	// if err != nil {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
+	if err != nil {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
 
-	// if !isAdmin {
-	// 	http.Error(w, "Forbidden", http.StatusForbidden)
-	//     return
-	// }
+	if !isAdmin {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	    return
+	}
 
 	var req struct {
 		FeatureID int `json:"feature_id,omitempty"`
@@ -527,18 +531,18 @@ func GetBannersByFeatureOrTag(featureID, tagID int) ([]models.Banner, error) {
 // }
 
 func DeleteBannerHandler(w http.ResponseWriter, r *http.Request) {
-    // adminToken := r.Header.Get("token")
-	// isAdmin, err := IsAdminTokenValid(adminToken)
+    adminToken := r.Header.Get("token")
+	isAdmin, err := IsAdminTokenValid(adminToken)
 
-	// if err != nil {
-	//     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//     return
-	// }
+	if err != nil {
+	    http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	    return
+	}
 
-	// if !isAdmin {
-	// 	http.Error(w, "Forbidden", http.StatusForbidden)
-	//     return
-	// }
+	if !isAdmin {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	    return
+	}
 
     idStr := mux.Vars(r)["id"]
     id, err := strconv.Atoi(idStr)
@@ -611,17 +615,17 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
         IsActive bool `json:"is_active,omitempty"`
     }
 
-    // adminToken := r.Header.Get("token")
-    // isAdmin, err := IsAdminTokenValid(adminToken)
-    // if err != nil {
-    //     http.Error(w, "Unauthorized", http.StatusUnauthorized)
-    //     return
-    // }
+    adminToken := r.Header.Get("token")
+    isAdmin, err := IsAdminTokenValid(adminToken)
+    if err != nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
 
-    // if !isAdmin {
-    //     http.Error(w, "Forbidden", http.StatusForbidden)
-    //     return
-    // }
+    if !isAdmin {
+        http.Error(w, "Forbidden", http.StatusForbidden)
+        return
+    }
 
     idStr := mux.Vars(r)["id"]
     id, err := strconv.Atoi(idStr)

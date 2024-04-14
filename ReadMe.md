@@ -21,6 +21,9 @@
 1) Кэш с активными пользователями для быстрой работы аутентификации (проверки токена на юзера или админа).
 2) Кэш с баннерами, которые запрашивали (которые обновляли туда же). Если в этом кеше нет баннера, то придется идти в бд. По логике, в бд ходить будем не часто, поэтому пункт 2 выполнен.
 
+## Интересности
+
+1. Вернемся к авторизации,
 
 добавить в апи создание пользователя, аутентификацию
 
@@ -57,12 +60,12 @@ curl -i -X POST http://localhost:8080/authorize \
 ```bash
 curl -i -X POST http://localhost:8080/banner \
 -H 'Content-Type: application/json' \
--H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzEzMDg3MjQyLCJzdWIiOiIzIn0.sOEsib2oYRyt8OFV3tuOT13PcuUcPMJzu7rLanU1hgg' \
+-H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJpc19hZG1pbiI6ZmFsc2UsImV4cCI6MTcxMzEyNzE5OSwic3ViIjoiMSJ9.uS_IMFpokzHGObZSZBMuJrPx_u8dWHNE_A3_YUcvrSg' \
 -d '{
     "title": "Новый баннер1",
     "text": "Это новый баннер1",
     "url": "https://example.com/new_banner1",
-    "feature_id": 123,
+    "feature_id": 1243,
     "tag_id": 457,
     "is_active": true
 }'

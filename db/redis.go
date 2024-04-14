@@ -59,10 +59,13 @@ func PeriodicallyCleanExpiredRedisTokens(interval time.Duration, stop <-chan str
 
 			for _, token := range tokens {
 				ttl := rdbUser.TTL(ctx, token).Val()
-				if ttl < 0 {
+                fmt.Println(ttl)
+				if ttl == 0 {
 					if err := rdbUser.Del(ctx, token).Err(); err != nil {
 						fmt.Println("Ошибка при удалении ключа:", err)
 						continue
+					} else {
+						fmt.Println("Ключ", token, "удален")
 					}
 				}
 			}
