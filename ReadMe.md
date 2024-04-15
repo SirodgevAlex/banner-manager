@@ -25,9 +25,17 @@
 
 1. Вернемся к авторизации,
 
-добавить в апи создание пользователя, аутентификацию
+## Как все запустить и что вообще делать?
 
-1. Запрос для создания пользователя
+0. Я прикрутил докер, поэтому можно делать просто
+
+```bash
+docker-compose up
+```
+
+Сами запросы я делал через curl, вот примеры
+
+1. Запрос для создания пользователя (в апи не стал дописывать). Создаем юзера и админа
 
 ```bash
 curl -i -X POST http://localhost:8080/register \
@@ -41,7 +49,7 @@ curl -i -X POST http://localhost:8080/register \
 -d '{"email": "kortkova@yandex.ru", "password": "REsdf12_", "is_admin": true}'
 ```
 
-6. Запрос для аутентификации
+2. Запрос для аутентификации. В случае успеха вернется токен, он будет expired через 5 минут. Напоминаю про параллельную функцию удаления старых токенов из кэша.
 
 ```bash
 curl -i -X POST http://localhost:8080/authorize \
@@ -55,7 +63,7 @@ curl -i -X POST http://localhost:8080/authorize \
 -d '{"email": "kortkova@yandex.ru", "password": "REsdf12_"}'
 ```
 
-7. Запрос на создание баннера
+3. Запрос на создание баннера. Сюда в токен надо вставить тот, который вернулся в успешном ответе на авторизацию админа
 
 ```bash
 curl -i -X POST http://localhost:8080/banner \
@@ -71,7 +79,7 @@ curl -i -X POST http://localhost:8080/banner \
 }'
 ```
 
-8. Запрос для получения баннера для пользователя
+4. Запрос для получения баннера для пользователя
 
 ```bash
 curl -i -X GET http://localhost:8080/user_banner \
@@ -100,3 +108,5 @@ curl -i -X GET http://localhost:8080/banner \
 curl -i -X DELETE http://localhost:8080/banner/6 \
 -H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzEzMDg5MjAwLCJzdWIiOiIzIn0.EJHSImpvV9bc7JPFZYPN-HeTPmOoIpr50JpaMAK6dC0'
 ```
+
+## Сложности, с которыми я столкунулся и как я их решил

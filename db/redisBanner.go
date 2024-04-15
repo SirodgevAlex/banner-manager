@@ -11,7 +11,7 @@ var rdbBanner *redis.Client
 
 func InitRedisBanner() {
 	rdbBanner = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     "redis:6379",
 		Password: "",
 		DB:       1,
 	})

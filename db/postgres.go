@@ -11,7 +11,7 @@ import (
 var db *sql.DB
 
 func ConnectPostgresDB() error {
-    connStr := "user=postgres dbname=banner_manager_tables password=1234 sslmode=disable"
+    connStr := "postgres://postgres:1234@postgres:5432/banner-manager-tables?sslmode=disable"
     var err error
     db, err = sql.Open("postgres", connStr)
     if err != nil {
