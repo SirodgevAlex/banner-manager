@@ -31,24 +31,18 @@
 docker-compose up
 ```
 
-или
-
-```
-
-```
-
 Сами запросы я делал через curl, вот примеры
 
 1. Запрос для создания пользователя (в апи не стал дописывать). Создаем юзера и админа
 
 ```bash
-curl -i -X POST http://localhost:8080/register \
+curl -i -X POST http://localhost:8082/register \
 -H 'Content-Type: application/json' \
 -d '{"email": "sirogdev@yandex.ru", "password": "Sneeejjir1_", "is_admin": false}'
 ```
 
 ```bash
-curl -i -X POST http://localhost:8080/register \
+curl -i -X POST http://localhost:8082/register \
 -H 'Content-Type: application/json' \
 -d '{"email": "kortkova@yandex.ru", "password": "REsdf12_", "is_admin": true}'
 ```
@@ -56,7 +50,7 @@ curl -i -X POST http://localhost:8080/register \
 2. Запрос для аутентификации. В случае успеха вернется токен, он будет expired через 5 минут. Напоминаю про параллельную функцию удаления старых токенов из кэша.
 
 ```bash
-curl -i -X POST http://localhost:8080/authorize \
+curl -i -X POST http://localhost:8082/authorize \
 -H 'Content-Type: application/json' \
 -d '{"Email": "sirodgev@yandex.ru", "Password": "Sneeeir1_"}'
 ```
@@ -67,10 +61,10 @@ curl -i -X POST http://localhost:8082/authorize \
 -d '{"email": "kortkova@yandex.ru", "password": "REsdf12_"}'
 ```
 
-3. Запрос на создание баннера. Сюда в токен надо вставить тот, который вернулся в успешном ответе на авторизацию админа
+3. Запрос на создание баннера. Сюда токен надо вставить (тот, который вернулся в успешном ответе на авторизацию админа)
 
 ```bash
-curl -i -X POST http://localhost:8080/banner \
+curl -i -X POST http://localhost:8082/banner \
 -H 'Content-Type: application/json' \
 -H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJpc19hZG1pbiI6ZmFsc2UsImV4cCI6MTcxMzEyNzE5OSwic3ViIjoiMSJ9.uS_IMFpokzHGObZSZBMuJrPx_u8dWHNE_A3_YUcvrSg' \
 -d '{
@@ -86,7 +80,7 @@ curl -i -X POST http://localhost:8080/banner \
 4. Запрос для получения баннера для пользователя
 
 ```bash
-curl -i -X GET http://localhost:8080/user_banner \
+curl -i -X GET http://localhost:8082/user_banner \
 -H 'Content-Type: application/json' \
 -H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJpc19hZG1pbiI6ZmFsc2UsImV4cCI6MTcxMzA1ODc4OCwic3ViIjoiMSJ9.ImQeNyL7tCl28FyT0bKdE-0xIqA-n355vO1ReObpRU0' \
 --data '{
@@ -99,7 +93,7 @@ curl -i -X GET http://localhost:8080/user_banner \
 9. Запрос для получения
 
 ```bash
-curl -i -X GET http://localhost:8080/banner \
+curl -i -X GET http://localhost:8082/banner \
 -H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzEzMDg5MjAwLCJzdWIiOiIzIn0.EJHSImpvV9bc7JPFZYPN-HeTPmOoIpr50JpaMAK6dC0' \
 --data '{
     "feature_id": 123
@@ -109,7 +103,7 @@ curl -i -X GET http://localhost:8080/banner \
 10. Запрос для удаления
 
 ```bash
-curl -i -X DELETE http://localhost:8080/banner/6 \
+curl -i -X DELETE http://localhost:8082/banner/6 \
 -H 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJpc19hZG1pbiI6dHJ1ZSwiZXhwIjoxNzEzMDg5MjAwLCJzdWIiOiIzIn0.EJHSImpvV9bc7JPFZYPN-HeTPmOoIpr50JpaMAK6dC0'
 ```
 
