@@ -38,6 +38,7 @@ func CacheBannerInRedis(tagID string, featureID string, banner *models.Banner) e
 }
 
 func GetBannerFromRedis(tagID string, featureID string) (*models.Banner, error) {
+    fmt.Println("Success")
     bannerKey := fmt.Sprintf("banner:%s:%s", featureID, tagID)
 
     jsonData, err := rdbBanner.Get(rdbBanner.Context(), bannerKey).Bytes()

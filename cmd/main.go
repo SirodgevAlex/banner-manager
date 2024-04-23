@@ -19,11 +19,13 @@ func main() {
 	defer close(stopCleanup)
 
 	go db.PeriodicallyCleanExpiredRedisTokens(time.Second, stopCleanup)
+
 	err := db.ConnectPostgresDB()
 	if err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
 	}
 	defer db.ClosePostgresDB()
+	db.WaitWhileDBNotReady()
 
 	router := mux.NewRouter()
 

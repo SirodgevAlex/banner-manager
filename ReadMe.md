@@ -1,5 +1,3 @@
-# Пока не смотрите - я не доделал
-
 # Отчет
 
 Привет!
@@ -33,6 +31,12 @@
 docker-compose up
 ```
 
+или
+
+```
+
+```
+
 Сами запросы я делал через curl, вот примеры
 
 1. Запрос для создания пользователя (в апи не стал дописывать). Создаем юзера и админа
@@ -40,7 +44,7 @@ docker-compose up
 ```bash
 curl -i -X POST http://localhost:8080/register \
 -H 'Content-Type: application/json' \
--d '{"email": "sirogdev@yandex.ru", "password": "Sneeeir1_", "is_admin": false}'
+-d '{"email": "sirogdev@yandex.ru", "password": "Sneeejjir1_", "is_admin": false}'
 ```
 
 ```bash
@@ -58,7 +62,7 @@ curl -i -X POST http://localhost:8080/authorize \
 ```
 
 ```bash
-curl -i -X POST http://localhost:8080/authorize \
+curl -i -X POST http://localhost:8082/authorize \
 -H 'Content-Type: application/json' \
 -d '{"email": "kortkova@yandex.ru", "password": "REsdf12_"}'
 ```

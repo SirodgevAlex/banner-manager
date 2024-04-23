@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: banner-manager-tables
+      POSTGRES_DB: banner_manager_tables
     ports:
       - "5437:5432"
     volumes:

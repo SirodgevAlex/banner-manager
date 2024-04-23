@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"log"
+	"fmt"
+	"time"
 
 	_ "github.com/lib/pq"
     "banner-manager/internal/models"
@@ -11,7 +13,7 @@ import (
 var db *sql.DB
 
 func ConnectPostgresDB() error {
-    connStr := "postgres://postgres:1234@postgres:5432/banner-manager-tables?sslmode=disable"
+    connStr := "postgres://postgres:1234@host.docker.internal:5432/banner_manager_tables?sslmode=disable"
     var err error
     db, err = sql.Open("postgres", connStr)
     if err != nil {
@@ -38,6 +40,19 @@ func GetPostgresDB() (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func WaitWhileDBNotReady() {
+	fmt.Println(db)
+    fmt.Println("Waiting for database to be ready...")
+    for {
+        if err := db.Ping(); err == nil {
+            fmt.Println("Database is ready!")
+            break
+        }
+        fmt.Println("Database is not ready, waiting...")
+        time.Sleep(time.Second)
+    }
 }
 
 func GetLastBannerRevisionFromDB(tagID, featureID string) (*models.Banner, error) {
